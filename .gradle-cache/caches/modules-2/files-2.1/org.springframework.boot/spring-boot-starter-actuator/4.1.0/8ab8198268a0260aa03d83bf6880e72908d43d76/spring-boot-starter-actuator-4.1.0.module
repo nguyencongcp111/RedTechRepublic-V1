@@ -1,0 +1,188 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "org.springframework.boot",
+    "module": "spring-boot-starter-actuator",
+    "version": "4.1.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.5.0"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot-starter",
+          "version": {
+            "requires": "4.1.0"
+          }
+        },
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot-starter-micrometer-metrics",
+          "version": {
+            "requires": "4.1.0"
+          }
+        },
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot-actuator-autoconfigure",
+          "version": {
+            "requires": "4.1.0"
+          }
+        },
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot-health",
+          "version": {
+            "requires": "4.1.0"
+          }
+        },
+        {
+          "group": "io.micrometer",
+          "module": "micrometer-observation",
+          "version": {
+            "requires": "1.17.0"
+          }
+        },
+        {
+          "group": "io.micrometer",
+          "module": "micrometer-jakarta9",
+          "version": {
+            "requires": "1.17.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "spring-boot-starter-actuator-4.1.0.jar",
+          "url": "spring-boot-starter-actuator-4.1.0.jar",
+          "size": 4804,
+          "sha512": "9d893bc34e2f4ec7ef26e56d0c368b25449b9c3319741bd9ddaf3e249c2d9d83a37fd6340ee0bd3c8d3ddbf43eedbe34daafab1e61b3e7597b3c778b5b2c1282",
+          "sha256": "f6f6c4166430953515336ecf3b25ea467e24c4e5705cbcc8cefa273a4bd6bde8",
+          "sha1": "bd15774d0bb852ab3d4f3bdbf7b134a51ef8063d",
+          "md5": "787dcd4561d81f46036d8448b52b7242"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot-starter",
+          "version": {
+            "requires": "4.1.0"
+          }
+        },
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot-starter-micrometer-metrics",
+          "version": {
+            "requires": "4.1.0"
+          }
+        },
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot-actuator-autoconfigure",
+          "version": {
+            "requires": "4.1.0"
+          }
+        },
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot-health",
+          "version": {
+            "requires": "4.1.0"
+          }
+        },
+        {
+          "group": "io.micrometer",
+          "module": "micrometer-observation",
+          "version": {
+            "requires": "1.17.0"
+          }
+        },
+        {
+          "group": "io.micrometer",
+          "module": "micrometer-jakarta9",
+          "version": {
+            "requires": "1.17.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "spring-boot-starter-actuator-4.1.0.jar",
+          "url": "spring-boot-starter-actuator-4.1.0.jar",
+          "size": 4804,
+          "sha512": "9d893bc34e2f4ec7ef26e56d0c368b25449b9c3319741bd9ddaf3e249c2d9d83a37fd6340ee0bd3c8d3ddbf43eedbe34daafab1e61b3e7597b3c778b5b2c1282",
+          "sha256": "f6f6c4166430953515336ecf3b25ea467e24c4e5705cbcc8cefa273a4bd6bde8",
+          "sha1": "bd15774d0bb852ab3d4f3bdbf7b134a51ef8063d",
+          "md5": "787dcd4561d81f46036d8448b52b7242"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "spring-boot-starter-actuator-4.1.0-javadoc.jar",
+          "url": "spring-boot-starter-actuator-4.1.0-javadoc.jar",
+          "size": 4804,
+          "sha512": "9d893bc34e2f4ec7ef26e56d0c368b25449b9c3319741bd9ddaf3e249c2d9d83a37fd6340ee0bd3c8d3ddbf43eedbe34daafab1e61b3e7597b3c778b5b2c1282",
+          "sha256": "f6f6c4166430953515336ecf3b25ea467e24c4e5705cbcc8cefa273a4bd6bde8",
+          "sha1": "bd15774d0bb852ab3d4f3bdbf7b134a51ef8063d",
+          "md5": "787dcd4561d81f46036d8448b52b7242"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "spring-boot-starter-actuator-4.1.0-sources.jar",
+          "url": "spring-boot-starter-actuator-4.1.0-sources.jar",
+          "size": 4804,
+          "sha512": "9d893bc34e2f4ec7ef26e56d0c368b25449b9c3319741bd9ddaf3e249c2d9d83a37fd6340ee0bd3c8d3ddbf43eedbe34daafab1e61b3e7597b3c778b5b2c1282",
+          "sha256": "f6f6c4166430953515336ecf3b25ea467e24c4e5705cbcc8cefa273a4bd6bde8",
+          "sha1": "bd15774d0bb852ab3d4f3bdbf7b134a51ef8063d",
+          "md5": "787dcd4561d81f46036d8448b52b7242"
+        }
+      ]
+    }
+  ]
+}

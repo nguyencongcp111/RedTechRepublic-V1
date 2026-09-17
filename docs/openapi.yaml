@@ -1,0 +1,332 @@
+openapi: 3.1.0
+info:
+  title: Omnichannel E-Commerce API
+  version: 1.0.0
+  description: Public contract exposed through the Nginx gateway on port 8080.
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/products:
+    post:
+      operationId: createProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateProductRequest' }
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Product' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    get:
+      operationId: listProducts
+      responses:
+        '200':
+          description: Products
+  /api/products/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      operationId: getProduct
+      responses:
+        '200':
+          description: Product
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Product' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      operationId: updateProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateProductRequest' }
+      responses:
+        '200': { description: Product updated }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/inventory/stock:
+    post:
+      operationId: createInventoryItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateInventoryItemRequest' }
+      responses:
+        '201': { description: Inventory item created }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/inventory/stock/{sku}:
+    patch:
+      operationId: adjustInventory
+      parameters:
+        - name: sku
+          in: path
+          required: true
+          schema: { type: string, maxLength: 64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [quantityDelta]
+              properties:
+                quantityDelta: { type: integer }
+      responses:
+        '200': { description: Inventory adjusted }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/inventory/reservation:
+    post:
+      operationId: reserveInventory
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateReservationRequest' }
+      responses:
+        '201':
+          description: Inventory reserved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reservation' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/inventory/reservation/{id}/status:
+    patch:
+      operationId: transitionReservation
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [CONFIRMED, RELEASED, EXPIRED]
+      responses:
+        '200': { description: Reservation transitioned }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/orders:
+    post:
+      operationId: createOrder
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateOrderRequest' }
+      responses:
+        '201':
+          description: Order created with server-authoritative product snapshots and reserved inventory
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /api/orders/{id}:
+    get:
+      operationId: getOrder
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Order
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/payments:
+    post:
+      operationId: createPayment
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreatePaymentRequest' }
+      responses:
+        '201': { description: Payment created after amount is checked against Order Service }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /api/payments/{id}/confirm:
+    post:
+      operationId: confirmPayment
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [providerReference]
+              properties:
+                providerReference: { type: string, maxLength: 255 }
+      responses:
+        '200': { description: Payment succeeded; an outbox event drives order confirmation }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/payments/{id}/cancel:
+    post:
+      operationId: cancelPayment
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reasonCode: { type: string, maxLength: 64 }
+                reason: { type: string, maxLength: 1000 }
+      responses:
+        '200': { description: Payment failed; an outbox event releases inventory }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/payments/{id}/refund:
+    post:
+      operationId: refundPayment
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200': { description: Successful payment refunded }
+        '409': { $ref: '#/components/responses/Conflict' }
+components:
+  parameters:
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, minLength: 1, maxLength: 128 }
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Resource not found
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Conflict:
+      description: State, idempotency, stock, duplicate, or concurrency conflict
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    ServiceUnavailable:
+      description: A required downstream service is unavailable
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+  schemas:
+    CreateProductRequest:
+      type: object
+      required: [sku, name, price, currency]
+      properties:
+        sku: { type: string, maxLength: 64 }
+        name: { type: string, maxLength: 255 }
+        description: { type: string, maxLength: 1500 }
+        price: { type: integer, format: int64, minimum: 0, description: Minor currency unit }
+        currency: { type: string, pattern: '^[A-Za-z]{3}$' }
+    UpdateProductRequest:
+      type: object
+      required: [name, price, status]
+      properties:
+        name: { type: string, maxLength: 255 }
+        description: { type: string, maxLength: 2000 }
+        price: { type: integer, format: int64, minimum: 0 }
+        status: { type: string, enum: [ACTIVE, INACTIVE, ARCHIVED] }
+    Product:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        sku: { type: string }
+        name: { type: string }
+        description: { type: string }
+        price: { type: integer, format: int64 }
+        currency: { type: string }
+        status: { type: string }
+        version: { type: integer, format: int64 }
+    CreateInventoryItemRequest:
+      type: object
+      required: [productId, sku, onHand]
+      properties:
+        productId: { type: string, format: uuid }
+        sku: { type: string, maxLength: 64 }
+        onHand: { type: integer, minimum: 0 }
+    CreateReservationRequest:
+      type: object
+      required: [orderId, sku, quantity]
+      properties:
+        orderId: { type: string, format: uuid }
+        sku: { type: string, maxLength: 64 }
+        quantity: { type: integer, minimum: 1 }
+    Reservation:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        orderId: { type: string, format: uuid }
+        inventoryItemId: { type: string, format: uuid }
+        sku: { type: string }
+        quantity: { type: integer }
+        status: { type: string, enum: [ACTIVE, CONFIRMED, RELEASED, EXPIRED] }
+        expiresAt: { type: string, format: date-time }
+    CreateOrderRequest:
+      type: object
+      required: [userId, currency, items]
+      properties:
+        userId: { type: string, format: uuid }
+        currency: { type: string, pattern: '^[A-Za-z]{3}$' }
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [productId, quantity]
+            properties:
+              productId: { type: string, format: uuid }
+              quantity: { type: integer, minimum: 1 }
+    Order:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        userId: { type: string, format: uuid }
+        status: { type: string }
+        totalQuantity: { type: integer }
+        totalAmount: { type: integer, format: int64 }
+        currency: { type: string }
+        items: { type: array, items: { type: object } }
+    CreatePaymentRequest:
+      type: object
+      required: [orderId, amount, currency, paymentMethod]
+      properties:
+        orderId: { type: string, format: uuid }
+        amount: { type: integer, format: int64, minimum: 1 }
+        currency: { type: string, pattern: '^[A-Za-z]{3}$' }
+        paymentMethod: { type: string, enum: [CARD, BANK_TRANSFER, E_WALLET, CASH_ON_DELIVERY] }
+    Problem:
+      type: object
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        code: { type: string }

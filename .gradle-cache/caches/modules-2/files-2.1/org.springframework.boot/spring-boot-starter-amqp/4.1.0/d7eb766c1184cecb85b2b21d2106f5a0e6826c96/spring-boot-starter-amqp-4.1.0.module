@@ -1,0 +1,132 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "org.springframework.boot",
+    "module": "spring-boot-starter-amqp",
+    "version": "4.1.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.5.0"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot-starter",
+          "version": {
+            "requires": "4.1.0"
+          }
+        },
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot-amqp",
+          "version": {
+            "requires": "4.1.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "spring-boot-starter-amqp-4.1.0.jar",
+          "url": "spring-boot-starter-amqp-4.1.0.jar",
+          "size": 4749,
+          "sha512": "53bc120a0281350080577a3cb8aba754f63bb9b0e723a00ab3bcae9d96facb4e9ebabbcaf83b1d540bd58b92e99ec18ba27f664958934a37fb1050d00193f381",
+          "sha256": "8a45d6d377a48a162c858cb84a41077bfd2ad6aef22f539120be6b92662628fb",
+          "sha1": "c99b8e6132ac825e613418cc5d9545f719b7d5ae",
+          "md5": "66a14901a2c362db036966469c3b1452"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot-starter",
+          "version": {
+            "requires": "4.1.0"
+          }
+        },
+        {
+          "group": "org.springframework.boot",
+          "module": "spring-boot-amqp",
+          "version": {
+            "requires": "4.1.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "spring-boot-starter-amqp-4.1.0.jar",
+          "url": "spring-boot-starter-amqp-4.1.0.jar",
+          "size": 4749,
+          "sha512": "53bc120a0281350080577a3cb8aba754f63bb9b0e723a00ab3bcae9d96facb4e9ebabbcaf83b1d540bd58b92e99ec18ba27f664958934a37fb1050d00193f381",
+          "sha256": "8a45d6d377a48a162c858cb84a41077bfd2ad6aef22f539120be6b92662628fb",
+          "sha1": "c99b8e6132ac825e613418cc5d9545f719b7d5ae",
+          "md5": "66a14901a2c362db036966469c3b1452"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "spring-boot-starter-amqp-4.1.0-javadoc.jar",
+          "url": "spring-boot-starter-amqp-4.1.0-javadoc.jar",
+          "size": 4749,
+          "sha512": "53bc120a0281350080577a3cb8aba754f63bb9b0e723a00ab3bcae9d96facb4e9ebabbcaf83b1d540bd58b92e99ec18ba27f664958934a37fb1050d00193f381",
+          "sha256": "8a45d6d377a48a162c858cb84a41077bfd2ad6aef22f539120be6b92662628fb",
+          "sha1": "c99b8e6132ac825e613418cc5d9545f719b7d5ae",
+          "md5": "66a14901a2c362db036966469c3b1452"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "spring-boot-starter-amqp-4.1.0-sources.jar",
+          "url": "spring-boot-starter-amqp-4.1.0-sources.jar",
+          "size": 4749,
+          "sha512": "53bc120a0281350080577a3cb8aba754f63bb9b0e723a00ab3bcae9d96facb4e9ebabbcaf83b1d540bd58b92e99ec18ba27f664958934a37fb1050d00193f381",
+          "sha256": "8a45d6d377a48a162c858cb84a41077bfd2ad6aef22f539120be6b92662628fb",
+          "sha1": "c99b8e6132ac825e613418cc5d9545f719b7d5ae",
+          "md5": "66a14901a2c362db036966469c3b1452"
+        }
+      ]
+    }
+  ]
+}

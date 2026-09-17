@@ -1,0 +1,191 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: microservice-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: postgres
+    ports:
+      - "15432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./postgres/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: microservice-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-ecommerce}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-ecommerce-dev}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  product-service:
+    build: ./product_service
+    environment:
+      PRODUCT_DB_URL: jdbc:postgresql://postgres:5432/x_product_db
+      PRODUCT_DB_USERNAME: ${POSTGRES_USER:-postgres}
+      PRODUCT_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DDL_AUTO: validate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  inventory-service:
+    build: ./inventory_service
+    environment:
+      INVENTORY_DB_URL: jdbc:postgresql://postgres:5432/x_inventory_db
+      INVENTORY_DB_USERNAME: ${POSTGRES_USER:-postgres}
+      INVENTORY_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DDL_AUTO: validate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  order-service:
+    build: ./order_service
+    environment:
+      ORDER_DB_URL: jdbc:postgresql://postgres:5432/x_order_db
+      ORDER_DB_USERNAME: ${POSTGRES_USER:-postgres}
+      ORDER_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      PRODUCT_SERVICE_URL: http://product-service:8081
+      INVENTORY_SERVICE_URL: http://inventory-service:8082
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-ecommerce}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-ecommerce-dev}
+      DDL_AUTO: validate
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      product-service:
+        condition: service_started
+      inventory-service:
+        condition: service_started
+    restart: unless-stopped
+
+  payment-service:
+    build: ./payment_service
+    environment:
+      PAYMENT_DB_URL: jdbc:postgresql://postgres:5432/x_payment_db
+      PAYMENT_DB_USERNAME: ${POSTGRES_USER:-postgres}
+      PAYMENT_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      ORDER_SERVICE_URL: http://order-service:8083
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-ecommerce}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-ecommerce-dev}
+      DDL_AUTO: validate
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      order-service:
+        condition: service_started
+    restart: unless-stopped
+
+  api-gateway:
+    build: ./api_gateway
+    ports:
+      - "8080:8080"
+    environment:
+      AUTH_SERVICE_URL: http://auth-service:8088
+      PRODUCT_SERVICE_URL: http://product-service:8081
+      INVENTORY_SERVICE_URL: http://inventory-service:8082
+      ORDER_SERVICE_URL: http://order-service:8083
+      PAYMENT_SERVICE_URL: http://payment-service:8084
+
+      JWT_SECRET: ${JWT_SECRET}
+
+    depends_on:
+      - auth-service
+      - product-service
+      - inventory-service
+      - order-service
+      - payment-service
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - product-service
+      - inventory-service
+      - order-service
+      - payment-service
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:12.1.0
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  redis:
+    image: redis:8-alpine
+    container_name: microservice-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped  
+
+  auth-service:
+    build: ./auth_service
+    ports:
+      - "8088:8088"
+    environment:
+      AUTH_DB_URL: jdbc:postgresql://postgres:5432/x_auth_db
+      AUTH_DB_USERNAME: ${POSTGRES_USER:-postgres}
+      AUTH_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-900000}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800000}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+      redis:
+        condition: service_healthy
+
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  grafana_data:
+  redis_data:
