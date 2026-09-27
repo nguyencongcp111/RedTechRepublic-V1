@@ -19,5 +19,7 @@ public record UpdateProductRequest(
         Long price,
 
         @NotNull
-        ProductStatus status
+        ProductStatus status,
+
+        @NotNull java.util.UUID categoryId
 ) {}

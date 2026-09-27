@@ -15,16 +15,11 @@ import java.util.Locale;
 @Component
 @RequiredArgsConstructor
 public class ProductMapper {
-    private final CategoryRepository categoryRepository;
 
     public Product addToEntity(CreateProductRequest request) {
         if (request == null) {
             return null;
         }
-
-        Category category = categoryRepository.findById(request.categoryId()).orElseThrow(
-                () -> new RuntimeException("Không tìm thấy ID")
-        );
 
         return Product.builder()
                 .sku(request.sku().trim().toUpperCase(Locale.ROOT))
@@ -32,7 +27,6 @@ public class ProductMapper {
                 .description(request.description())
                 .price(request.price())
                 .currency(request.currency().trim().toUpperCase(Locale.ROOT))
-                .category(category)
                 .build();
     }
 
@@ -56,11 +50,10 @@ public class ProductMapper {
     }
 
     public ProductResponse toDTO(Product product) {
-        Category category = product.getCategory();
-
         if (product == null) {
             return null;
         }
+        Category category = product.getCategory();
 
         return new ProductResponse(
                 product.getId(),
@@ -79,7 +72,8 @@ public class ProductMapper {
                 product.getStatus(),
                 product.getCreatedAt(),
                 product.getUpdatedAt(),
-                product.getVersion()
+                product.getVersion(),
+                product.getImageUrl()
         );
     }
 }

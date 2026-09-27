@@ -30,6 +30,7 @@ public class SecurityConfig {
                         httpSecuritySessionManagementConfigurer.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
                         ))
+                .exceptionHandling(e -> e.authenticationEntryPoint((req,res,ex) -> res.sendError(401)))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 HttpMethod.POST,

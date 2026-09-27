@@ -10,7 +10,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ProductRepository extends JpaRepository<Product, UUID> {
+public interface ProductRepository extends JpaRepository<Product, UUID>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<Product> {
+    long countByStatus(ProductStatus status);
     Optional<Product> findBySku(String sku);
 
     boolean existsBySku(String sku);

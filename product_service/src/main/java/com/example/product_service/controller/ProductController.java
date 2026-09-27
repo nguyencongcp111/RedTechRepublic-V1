@@ -41,6 +41,8 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<PageResponse<ProductResponse>> getProducts(
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) com.example.product_service.enums.ProductStatus status,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -53,7 +55,7 @@ public class ProductController {
         );
 
         PageResponse<ProductResponse> products =
-                productService.search(keyword, pageable);
+                productService.search(keyword, categoryId, status, pageable);
 
         return ResponseEntity.ok(products);
     }

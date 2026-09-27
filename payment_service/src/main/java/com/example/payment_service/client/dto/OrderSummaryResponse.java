@@ -4,6 +4,7 @@ import java.util.UUID;
 
 public record OrderSummaryResponse(
         UUID id,
+        UUID userId,
         long totalAmount,
         String currency,
         String status

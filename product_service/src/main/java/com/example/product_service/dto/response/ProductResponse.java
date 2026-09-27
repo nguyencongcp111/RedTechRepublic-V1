@@ -16,5 +16,6 @@ public record ProductResponse(
         ProductStatus status,
         Instant createdAt,
         Instant updatedAt,
-        long version
+        long version,
+        String imageUrl
 ) {}

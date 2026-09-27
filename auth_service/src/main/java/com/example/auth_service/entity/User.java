@@ -22,8 +22,10 @@ public class User {
     @Column(length = 36)
     private UUID id;
 
+    @Column(nullable = false, unique = true, length = 64)
     private String username;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String password;
 
     private String role;

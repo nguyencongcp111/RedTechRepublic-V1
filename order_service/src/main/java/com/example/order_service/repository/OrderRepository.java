@@ -10,6 +10,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface OrderRepository extends JpaRepository<Order, UUID> {
+    long countByStatus(OrderStatus status);
+
     @EntityGraph(attributePaths = "items")
     Optional<Order> findByIdempotencyKey(String idempotencyKey);
 

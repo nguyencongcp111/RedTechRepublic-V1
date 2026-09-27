@@ -2,6 +2,14 @@ server:
   port: 8080
 
 spring:
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
   application:
     name: api-gateway
 
@@ -48,4 +56,4 @@ management:
 
 logging:
   level:
-    org.springframework.security: TRACE
+    org.springframework.security: INFO

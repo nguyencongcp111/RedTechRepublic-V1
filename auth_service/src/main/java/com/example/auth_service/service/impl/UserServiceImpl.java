@@ -31,25 +31,21 @@ public class UserServiceImpl implements UserService {
     private final RefreshTokenService refreshTokenService;
     private final StringRedisTemplate redisTemplate;
     private final JwtBlacklistService jwtBlacklistService;
+    private final com.example.auth_service.repository.RefreshTokenRepository refreshTokenRepository;
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public User registerUser(RegisterRequest registerRequest) {
         boolean find = userRepository.existsByUsername(registerRequest.getUsername());
         if (find) {
-            throw new RuntimeException("Username da ton tai");
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.CONFLICT, "Tên đăng nhập đã tồn tại");
         }
 
-        String requestedRole = registerRequest.getRole() != null ?
-                registerRequest.getRole().trim().toUpperCase() :
-                "";
-
-        String assignedRole = Roles.ADMIN.equals(requestedRole) ? Roles.ADMIN : Roles.USER;
-
-        return userRepository.save(
+        return userRepository.saveAndFlush(
                 User.builder()
                         .username(registerRequest.getUsername())
                         .password(passwordEncoder.encode(registerRequest.getPassword()))
-                        .role(assignedRole)
+                        .role(Roles.USER)
                         .build()
         );
     }
@@ -85,6 +81,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public JWTResponse refreshAccessToken(String token) {
         RefreshToken refreshToken =
                 refreshTokenService.verifyExpiration(token);
@@ -102,6 +99,7 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public void logout(String authorization) {
         if (authorization == null || !authorization.startsWith("Bearer ")) {
             throw new IllegalArgumentException("Invalid Authorization header");
@@ -116,5 +114,6 @@ public class UserServiceImpl implements UserService {
         Instant expiry = claims.getExpiration().toInstant();
 
         jwtBlacklistService.blacklist(jti, expiry);
+        refreshTokenRepository.deleteByUserId(java.util.UUID.fromString(claims.get("userId", String.class)));
     }
 }

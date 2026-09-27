@@ -1,128 +1,50 @@
 package com.example.api_gateway.security;
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
 import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-
+import java.util.*;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-
-    private final SecretKey secretKey;
-
-    public JwtAuthenticationFilter(@Value("${JWT_SECRET}") String jwtSecret) {
-        this.secretKey = Keys.hmacShaKeyFor(
-                jwtSecret.getBytes(StandardCharsets.UTF_8)
-        );
+    private final SecretKey key;
+    private final StringRedisTemplate redis;
+    public JwtAuthenticationFilter(@Value("${JWT_SECRET}") String secret, StringRedisTemplate redis) {
+        key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)); this.redis = redis;
     }
-
-    @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
-
-        String authorization = request.getHeader("Authorization");
-
-        System.out.println(
-                "GATEWAY JWT => "
-                        + request.getMethod()
-                        + " "
-                        + request.getRequestURI()
-                        + " | Authorization = "
-                        + (authorization != null ? "PRESENT" : "ABSENT")
-        );
-
-        if (authorization == null || !authorization.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        String token = authorization.substring(7);
-
+    @Override protected boolean shouldNotFilter(HttpServletRequest request) {
+        return Set.of("/api/auth/login", "/api/auth/register", "/api/auth/refresh-token", "/actuator/health", "/error").contains(request.getRequestURI());
+    }
+    @Override protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
+        String header = request.getHeader("Authorization");
+        if (header == null || !header.startsWith("Bearer ")) { chain.doFilter(request, response); return; }
+        Claims claims;
         try {
-            Claims claims = Jwts.parser()
-                    .verifyWith(secretKey)
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
-
-            String username = claims.getSubject();
-            String role = claims.get("role", String.class);
-
-            if (username == null) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                return;
-            }
-
-            List<SimpleGrantedAuthority> authorities =
-                    role != null
-                            ? List.of(new SimpleGrantedAuthority("ROLE_" + role))
-                            : List.of();
-
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            username,
-                            null,
-                            authorities
-                    );
-
-            System.out.println(
-                    "GATEWAY AUTH => user=" + username
-                            + " | authorities=" + authorities
-                            + " | authenticated=" + authentication.isAuthenticated()
-            );
-
-            SecurityContextHolder.getContext()
-                    .setAuthentication(authentication);
-
-            System.out.println(
-                    "GATEWAY JWT: authenticated user="
-                            + username
-                            + ", role="
-                            + role
-            );
-
-            filterChain.doFilter(request, response);
-
-        } catch (Exception e) {
-
-            System.out.println(
-                    "GATEWAY JWT: invalid token - "
-                            + e.getClass().getSimpleName()
-                            + ": "
-                            + e.getMessage()
-            );
-
-            SecurityContextHolder.clearContext();
-
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        }
+            claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(header.substring(7)).getPayload();
+            UUID.fromString(Objects.toString(claims.get("userId", String.class), ""));
+            if (claims.getSubject() == null || claims.getId() == null || claims.getExpiration() == null
+                    || !Set.of("USER", "ADMIN").contains(Objects.toString(claims.get("role", String.class), ""))) throw new IllegalArgumentException("Invalid claims");
+        } catch (JwtException | IllegalArgumentException ex) { reject(response, 401, "Token không hợp lệ hoặc đã hết hạn"); return; }
+        try {
+            if (Boolean.TRUE.equals(redis.hasKey("blacklist:" + claims.getId()))) { reject(response, 401, "Phiên đăng nhập đã kết thúc"); return; }
+        } catch (org.springframework.dao.DataAccessException ex) { reject(response, 503, "Dịch vụ xác thực tạm thời không khả dụng"); return; }
+        var authentication = new UsernamePasswordAuthenticationToken(claims.getSubject(), null,
+                List.of(new SimpleGrantedAuthority("ROLE_" + claims.get("role", String.class))));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        chain.doFilter(request, response);
     }
-
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
-
-        return path.equals("/api/auth/login")
-                || path.equals("/api/auth/register")
-                || path.equals("/api/auth/refresh-token")
-                || path.equals("/actuator/health")
-                || path.equals("/error");
+    private void reject(HttpServletResponse response, int status, String detail) throws IOException {
+        SecurityContextHolder.clearContext();
+        response.setStatus(status); response.setContentType("application/problem+json"); response.setCharacterEncoding("UTF-8");
+        response.getWriter().write("{\"status\":" + status + ",\"detail\":\"" + detail + "\"}");
     }
 }

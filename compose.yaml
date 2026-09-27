@@ -40,6 +40,9 @@ services:
       PRODUCT_DB_URL: jdbc:postgresql://postgres:5432/x_product_db
       PRODUCT_DB_USERNAME: ${POSTGRES_USER:-postgres}
       PRODUCT_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
       DDL_AUTO: validate
     depends_on:
       postgres:
@@ -64,6 +67,7 @@ services:
       ORDER_DB_URL: jdbc:postgresql://postgres:5432/x_order_db
       ORDER_DB_USERNAME: ${POSTGRES_USER:-postgres}
       ORDER_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET}
       PRODUCT_SERVICE_URL: http://product-service:8081
       INVENTORY_SERVICE_URL: http://inventory-service:8082
       RABBITMQ_HOST: rabbitmq
@@ -87,6 +91,7 @@ services:
       PAYMENT_DB_URL: jdbc:postgresql://postgres:5432/x_payment_db
       PAYMENT_DB_USERNAME: ${POSTGRES_USER:-postgres}
       PAYMENT_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET}
       ORDER_SERVICE_URL: http://order-service:8083
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-ecommerce}
@@ -106,6 +111,7 @@ services:
     ports:
       - "8080:8080"
     environment:
+      REDIS_HOST: redis
       AUTH_SERVICE_URL: http://auth-service:8088
       PRODUCT_SERVICE_URL: http://product-service:8081
       INVENTORY_SERVICE_URL: http://inventory-service:8082
@@ -121,6 +127,14 @@ services:
       - order-service
       - payment-service
     restart: unless-stopped
+    
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - api-gateway
+    restart: unless-stopped  
 
   prometheus:
     image: prom/prometheus:v3.5.0

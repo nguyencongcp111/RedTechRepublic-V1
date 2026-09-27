@@ -1,7 +1,7 @@
 package com.example.auth_service.dto.request;
 
 public record LoginRequest(
-        String username,
-        String password
+        @jakarta.validation.constraints.NotBlank String username,
+        @jakarta.validation.constraints.NotBlank String password
 ) {
 }

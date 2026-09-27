@@ -1,36 +1,22 @@
 package com.example.auth_service.exception;
-
-import com.example.auth_service.dto.response.ErrorResponse;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import java.time.LocalDateTime;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.*;
 import java.util.NoSuchElementException;
-
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ErrorResponse> handleWrongUsernameOrPassword(
-            BadCredentialsException exception
-    ) {
-
-        ErrorResponse response = new ErrorResponse<>();
-        response.setTimestamp(LocalDateTime.now());
-        response.setStatus(HttpStatus.UNAUTHORIZED);
-        response.setMessage(exception.getMessage());
-
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    @ExceptionHandler({BadCredentialsException.class, NoSuchElementException.class})
+    ResponseEntity<ProblemDetail> unauthorized(RuntimeException ex) {
+        return ResponseEntity.status(401).body(ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage()));
     }
-
-    @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<String> handleInvalidRefreshToken(
-            NoSuchElementException exception
-    ) {
-        return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
-                .body("Refresh token không hợp lệ");
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    ResponseEntity<ProblemDetail> invalid(MethodArgumentNotValidException ex) {
+        String detail = ex.getBindingResult().getFieldErrors().stream().map(e -> e.getField() + ": " + e.getDefaultMessage()).findFirst().orElse("Dữ liệu không hợp lệ");
+        return ResponseEntity.badRequest().body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, detail));
+    }
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    ResponseEntity<ProblemDetail> duplicate() {
+        return ResponseEntity.status(409).body(ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Tài khoản đã tồn tại"));
     }
 }

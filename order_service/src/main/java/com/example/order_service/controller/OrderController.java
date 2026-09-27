@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -26,14 +27,23 @@ public class OrderController {
             @RequestHeader("Idempotency-Key") @Size(min = 1, max = 128) String idempotencyKey,
             @Valid @RequestBody CreateOrderRequest request
     ) {
+        com.example.order_service.security.Ownership.require(request.userId());
         return new ResponseEntity<>(
-                orderService.createOrder(idempotencyKey, request),HttpStatus.CREATED
+                orderService.createOrder(idempotencyKey, request), HttpStatus.CREATED
         );
     }
 
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderResponse> getOrder(@PathVariable UUID orderId) {
+        if (!com.example.order_service.security.Ownership.service()) requireOwner(orderId);
         return ResponseEntity.ok(orderService.getOrderById(orderId));
+    }
+
+    /** List all orders for a given user, newest first */
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<OrderResponse>> getOrdersByUser(@PathVariable UUID userId) {
+        com.example.order_service.security.Ownership.require(userId);
+        return ResponseEntity.ok(orderService.getOrdersByUserId(userId));
     }
 
     @PostMapping("/{orderId}/items")
@@ -41,6 +51,7 @@ public class OrderController {
             @PathVariable UUID orderId,
             @Valid @RequestBody CreateOrderItemRequest request
     ) {
+        requireOwner(orderId);
         return ResponseEntity.ok(
                 orderService.addItem(orderId, request)
         );
@@ -51,8 +62,12 @@ public class OrderController {
             @PathVariable UUID orderId,
             @PathVariable UUID orderItemId
     ) {
+        requireOwner(orderId);
         return ResponseEntity.ok(
                 orderService.removeItem(orderId, orderItemId)
         );
+    }
+    private void requireOwner(UUID orderId) {
+        com.example.order_service.security.Ownership.require(orderService.getOrderById(orderId).userId());
     }
 }

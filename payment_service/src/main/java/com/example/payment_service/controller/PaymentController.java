@@ -22,12 +22,14 @@ import java.util.UUID;
 @Validated
 public class PaymentController {
     private final PaymentService paymentService;
+    private final com.example.payment_service.client.OrderClient orderClient;
 
     @PostMapping
     public ResponseEntity<PaymentResponse> createPayment (
             @RequestHeader("Idempotency-Key") @Size(min = 1, max = 128) String idempotencyKey,
             @Valid @RequestBody CreatePaymentRequest request
     ) {
+        requireOrder(request.orderId());
         return new ResponseEntity<>(
                 paymentService.createPayment(idempotencyKey, request), HttpStatus.CREATED
         );
@@ -36,6 +38,7 @@ public class PaymentController {
     @GetMapping("/{id}")
     public ResponseEntity<PaymentResponse> getPaymentById (@PathVariable UUID id)
     {
+        requireOrder(paymentService.getPaymentById(id).orderId());
         return new ResponseEntity<>(
                 paymentService.getPaymentById(id), HttpStatus.OK
         );
@@ -44,9 +47,19 @@ public class PaymentController {
     @GetMapping("/by-order/{orderId}")
     public ResponseEntity<List<PaymentResponse>> getPaymentByOrderId (@PathVariable UUID orderId)
     {
+        requireOrder(orderId);
         return new ResponseEntity<>(
                 paymentService.getPaymentByOrderId(orderId), HttpStatus.OK
         );
+    }
+
+
+    @PostMapping("/by-orders")
+    public ResponseEntity<List<PaymentResponse>> getPaymentsByOrders(
+            @RequestBody @Size(min = 1, max = 100) List<@jakarta.validation.constraints.NotNull UUID> orderIds
+    ) {
+        orderIds.stream().distinct().forEach(this::requireOrder);
+        return ResponseEntity.ok(paymentService.getPaymentsByOrderIds(orderIds));
     }
 
     @PostMapping("/{paymentId}/confirm")
@@ -63,6 +76,7 @@ public class PaymentController {
     public ResponseEntity<PaymentResponse> cancelPayment (
             @PathVariable UUID paymentId, @Valid @RequestBody CancelPaymentRequest request
     ) {
+        requireOrder(paymentService.getPaymentById(paymentId).orderId());
         return new ResponseEntity<>(
                 paymentService.cancelPayment(paymentId, request), HttpStatus.OK
         );
@@ -75,5 +89,8 @@ public class PaymentController {
         return new ResponseEntity<>(
                 paymentService.refund(paymentId), HttpStatus.OK
         );
+    }
+    private void requireOrder(UUID orderId) {
+        com.example.payment_service.security.Ownership.require(orderClient.getOrder(orderId).userId());
     }
 }

@@ -123,6 +123,13 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public java.util.List<OrderResponse> getOrdersByUserId(UUID userId) {
+        return orderRepository.findAllByUserIdOrderByCreatedAtDesc(userId)
+                .stream().map(orderMapper::toDTO).toList();
+    }
+
+    @Override
     @Transactional
     public OrderResponse addItem(
             UUID orderId,
@@ -221,7 +228,7 @@ public class OrderServiceImpl implements OrderService {
                 .map(item -> item.productId() + ":" + item.quantity())
                 .collect(java.util.stream.Collectors.joining(";"));
         String canonical = request.userId() + "|"
-                + request.currency().trim().toUpperCase(Locale.ROOT) + "|" + canonicalItems;
+                + request.currency().trim().toUpperCase(Locale.ROOT) + "|" + request.paymentMethod() + "|" + canonicalItems;
         try {
             return HexFormat.of().formatHex(
                     MessageDigest.getInstance("SHA-256")

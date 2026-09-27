@@ -4,10 +4,13 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import jakarta.validation.ConstraintViolationException;
 
 import java.net.URI;
 
@@ -37,6 +40,28 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .orElse("Dữ liệu đầu vào không hợp lệ");
         return problem(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", detail);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    ResponseEntity<ProblemDetail> unreadable(HttpMessageNotReadableException exception) {
+        String msg = exception.getMessage();
+        String detail = (msg != null && msg.length() > 200) ? msg.substring(0, 200) : msg;
+        return problem(HttpStatus.BAD_REQUEST, "INVALID_REQUEST_BODY", detail);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    ResponseEntity<ProblemDetail> constraintViolation(ConstraintViolationException exception) {
+        String detail = exception.getConstraintViolations().stream()
+                .findFirst()
+                .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                .orElse("Dữ liệu không hợp lệ");
+        return problem(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", detail);
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    ResponseEntity<ProblemDetail> missingHeader(MissingRequestHeaderException exception) {
+        return problem(HttpStatus.BAD_REQUEST, "MISSING_HEADER",
+                "Header bắt buộc bị thiếu: " + exception.getHeaderName());
     }
 
     private ResponseEntity<ProblemDetail> problem(HttpStatus status, String code, String detail) {

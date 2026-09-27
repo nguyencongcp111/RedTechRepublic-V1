@@ -31,7 +31,7 @@ public class CategoryController {
         );
     }
 
-    @GetMapping("/private")
+    @GetMapping({"", "/private"})
     public ResponseEntity<PageResponse<CategoryResponse>> getCategory(
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") @Min(0) int page,

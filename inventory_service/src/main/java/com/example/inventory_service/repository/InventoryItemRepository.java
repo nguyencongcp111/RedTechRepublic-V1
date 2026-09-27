@@ -12,6 +12,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface InventoryItemRepository extends JpaRepository<InventoryItem, UUID> {
+    @Query("select coalesce(sum(i.onHand),0) from InventoryItem i")
+    long totalOnHand();
+    @Query("select coalesce(sum(i.reserved),0) from InventoryItem i")
+    long totalReserved();
+    @Query("select count(i) from InventoryItem i where i.onHand - i.reserved <= 5")
+    long lowStockCount();
     Optional<InventoryItem> findByProductId(UUID productId);
 
     Optional<InventoryItem> findBySku(String sku);

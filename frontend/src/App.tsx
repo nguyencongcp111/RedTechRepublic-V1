@@ -1,98 +1,103 @@
-import { useState, useCallback } from "react";
-import { useProducts } from "./api/useProducts";
-import { createProduct, updateProduct } from "./api/productApi";
-import SearchBox from './components/SearchBox';
-import Pagination from './components/Pagination';
-import ProductForm from './components/ProductForm';
-import type { Product, CreateProductRequest, UpdateProductRequest } from './types/product';
-import type { ApiErrorResponse } from './types/apiError';
-import ProductList from "./components/ProductList";
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { CartProvider } from './context/CartContext';
+import MainLayout from './components/layout/MainLayout';
+import ShopLayout from './components/layout/ShopLayout';
+import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage';
+import ProductsPage from './pages/ProductsPage';
+import InventoryPage from './pages/InventoryPage';
+import OrdersPage from './pages/OrdersPage';
+import PaymentsPage from './pages/PaymentsPage';
+import ShopPage from './pages/shop/ShopPage';
+import CartPage from './pages/shop/CartPage';
+import OrderHistoryPage from './pages/shop/OrderHistoryPage';
+import PaymentHistoryPage from './pages/shop/PaymentHistoryPage';
+
+/** Admin-only route guard */
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, isAuthenticated } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.role !== 'ADMIN') return <Navigate to="/shop" replace />;
+  return <>{children}</>;
+}
+
+/** Cart route: must be authenticated to checkout, admin is redirected to dashboard */
+function CartRoute({ children }: { children: React.ReactNode }) {
+  const { user, isAuthenticated } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" state={{ from: '/shop/cart' }} replace />;
+  if (user?.role === 'ADMIN') return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+}
+
+/** Smart root route: Admin lands on /dashboard, guests and customers land on /shop */
+function RootRoute() {
+  const { user, isAuthenticated } = useAuth();
+  if (isAuthenticated && user?.role === 'ADMIN') {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <Navigate to="/shop" replace />;
+}
 
 function App() {
-  const [keyword, setKeyword] = useState('');
-  const [page, setPage] = useState(0);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-
-  const { products, totalPages, state, errorMessage, refetch } = useProducts(keyword, page);
-
-  const handleSearch = useCallback((newKeyword: string) => {
-    console.log('SEARCH CALLED:', newKeyword);
-
-    setKeyword(newKeyword);
-    setPage(0);
-  }, []);
-
-  const extractErrorMessage = (error: unknown): string => {
-    let message = 'Da xay ra loi khong xac dinh, vui long thu lai.';
-
-    if (error instanceof Error) {
-      message = error.message;
-    } else if (typeof error === 'string') {
-      message = error;
-    } else if (typeof error === 'object' && error !== null) {
-      const errObj = error as ApiErrorResponse;
-      if (errObj.message) {
-        message = errObj.message;
-      }
-    }
-    return message;
-  }
-
-  const handleFormSubmit = async (
-    values: CreateProductRequest | UpdateProductRequest
-) => {
-    setSubmitting(true);
-    setFormError(null);
-
-    try {
-        if (editingProduct) {
-            if (!('status' in values)) {
-                throw new Error('Dữ liệu cập nhật sản phẩm không hợp lệ.');
-            }
-
-            await updateProduct(editingProduct.id, values);
-        } else {
-            if (!('sku' in values)) {
-                throw new Error('Dữ liệu tạo sản phẩm không hợp lệ.');
-            }
-
-            await createProduct(values);
-        }
-
-        setEditingProduct(null);
-        await refetch();
-    } catch (err) {
-        setFormError(extractErrorMessage(err));
-    } finally {
-        setSubmitting(false);
-    }
-};
   return (
-    <div style={{ padding: 24, fontFamily: 'sans-serif', maxWidth:
-    800, margin: '0 auto' }}>
-      <h1>Quản lý sản phẩm (ADMIN)</h1>
-      <ProductForm
-        editingProduct={editingProduct}
-        onSubmit={handleFormSubmit}
-        submitting={submitting}
-        serverError={formError}
-        onCancel={() => setEditingProduct(null)}
-      />
-      <SearchBox onSearch={handleSearch} />
-      <div style={{ marginTop: 16 }}>
-        <ProductList
-          products={products}
-          state={state}
-          errorMessage={errorMessage}
-          onRetry={refetch}
-          onEdit={setEditingProduct}
-        />
-      </div>
-      <Pagination currentPage={page} totalPages={totalPages}
-      onPageChange={setPage} />
-    </div>
+    <BrowserRouter>
+      <AuthProvider>
+        <CartProvider>
+          <Routes>
+            {/* Public – default landing is /shop for guests/users, /dashboard for admin */}
+            <Route path="/" element={<RootRoute />} />
+            <Route path="/login" element={<LoginPage />} />
+
+            {/* /shop – public: anyone can browse, login required to add to cart */}
+            <Route path="/shop" element={
+              <ShopLayout><ShopPage /></ShopLayout>
+            } />
+
+            {/* /shop/cart – requires login to proceed checkout */}
+            <Route path="/shop/cart" element={
+              <CartRoute>
+                <ShopLayout><CartPage /></ShopLayout>
+              </CartRoute>
+            } />
+
+            {/* /shop/orders – user order history */}
+            <Route path="/shop/orders" element={
+              <CartRoute>
+                <ShopLayout><OrderHistoryPage /></ShopLayout>
+              </CartRoute>
+            } />
+
+            {/* /shop/payments – user payment history */}
+            <Route path="/shop/payments" element={
+              <CartRoute>
+                <ShopLayout><PaymentHistoryPage /></ShopLayout>
+              </CartRoute>
+            } />
+
+            {/* ── ADMIN routes ── */}
+            <Route path="/dashboard" element={
+              <AdminRoute><MainLayout><DashboardPage /></MainLayout></AdminRoute>
+            } />
+            <Route path="/products" element={
+              <AdminRoute><MainLayout><ProductsPage /></MainLayout></AdminRoute>
+            } />
+            <Route path="/inventory" element={
+              <AdminRoute><MainLayout><InventoryPage /></MainLayout></AdminRoute>
+            } />
+            <Route path="/orders" element={
+              <AdminRoute><MainLayout><OrdersPage /></MainLayout></AdminRoute>
+            } />
+            <Route path="/payments" element={
+              <AdminRoute><MainLayout><PaymentsPage /></MainLayout></AdminRoute>
+            } />
+
+            {/* Catch-all */}
+            <Route path="*" element={<RootRoute />} />
+          </Routes>
+        </CartProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 

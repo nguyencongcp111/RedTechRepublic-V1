@@ -9,15 +9,17 @@ import java.util.List;
 import java.util.UUID;
 
 public interface PaymentService {
-    PaymentResponse createPayment (String idempotencyKey, CreatePaymentRequest request);
+    PaymentResponse createPayment(String idempotencyKey, CreatePaymentRequest request);
 
-    PaymentResponse getPaymentById (UUID id);
+    PaymentResponse getPaymentById(UUID id);
 
-    List<PaymentResponse> getPaymentByOrderId (UUID id);
+    List<PaymentResponse> getPaymentByOrderId(UUID id);
 
-    PaymentResponse confirmPayment (UUID id, ConfirmPaymentRequest request);
+    List<PaymentResponse> getPaymentsByOrderIds(List<UUID> orderIds);
 
-    PaymentResponse cancelPayment (UUID id, CancelPaymentRequest request);
+    PaymentResponse confirmPayment(UUID id, ConfirmPaymentRequest request);
 
-    PaymentResponse refund (UUID id);
+    PaymentResponse cancelPayment(UUID id, CancelPaymentRequest request);
+
+    PaymentResponse refund(UUID id);
 }

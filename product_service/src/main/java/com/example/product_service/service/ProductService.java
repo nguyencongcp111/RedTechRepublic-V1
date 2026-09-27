@@ -18,6 +18,8 @@ public interface ProductService {
 
     PageResponse<ProductResponse> search(String keyword, Pageable pageable);
 
+    PageResponse<ProductResponse> search(String keyword, UUID categoryId, com.example.product_service.enums.ProductStatus status, Pageable pageable);
+
     ProductResponse getProductById (UUID id);
 
     ProductResponse getProductBySku (String sku);

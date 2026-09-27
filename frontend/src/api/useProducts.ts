@@ -43,6 +43,6 @@ export function useProducts(keyword: string, page: number, size = 10) {
                 setState('error');
             });
     }, [keyword, page, size]);
-    useEffect(() => { fetchProducts(); }, [fetchProducts]);
+    useEffect(() => { const timer = setTimeout(fetchProducts, 0); return () => clearTimeout(timer); }, [fetchProducts]);
     return { products, totalPages, state, errorMessage, refetch: fetchProducts };
 }

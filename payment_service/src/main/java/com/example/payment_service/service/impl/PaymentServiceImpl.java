@@ -87,6 +87,14 @@ public class PaymentServiceImpl implements PaymentService {
 
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<PaymentResponse> getPaymentsByOrderIds(List<UUID> orderIds) {
+        if (orderIds == null || orderIds.isEmpty()) return List.of();
+        return paymentRepository.findAllByOrderIdIn(orderIds)
+                .stream().map(paymentMapper::toDTO).toList();
+    }
+
 
     @Override
     @Transactional

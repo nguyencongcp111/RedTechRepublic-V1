@@ -75,4 +75,10 @@ public class Product {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
+
+    @Column(length = 2000)
+    private String imageUrl;
+
+    @Column(length = 255)
+    private String imagePublicId;
 }

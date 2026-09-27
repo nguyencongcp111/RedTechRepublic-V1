@@ -13,6 +13,15 @@ import java.net.URI;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(IllegalArgumentException.class)
+    ResponseEntity<ProblemDetail> badRequest(IllegalArgumentException exception) {
+        return problem(HttpStatus.BAD_REQUEST, "INVALID_ARGUMENT", exception.getMessage());
+    }
+
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    ResponseEntity<ProblemDetail> tooLarge() {
+        return problem(HttpStatus.PAYLOAD_TOO_LARGE, "IMAGE_TOO_LARGE", "Ảnh tối đa 5 MB");
+    }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     ResponseEntity<ProblemDetail> handleNotFound(ResourceNotFoundException exception) {

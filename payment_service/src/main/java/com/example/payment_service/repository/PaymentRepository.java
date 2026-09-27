@@ -11,11 +11,16 @@ import java.util.UUID;
 
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, UUID> {
+    long countByStatus(PaymentStatus status);
+    @org.springframework.data.jpa.repository.Query("select p.currency, sum(p.amount) from Payment p where p.status = com.example.payment_service.enums.PaymentStatus.SUCCEEDED group by p.currency")
+    List<Object[]> revenueByCurrency();
     Optional<Payment> findByIdempotencyKey(String idempotencyKey);
 
     Optional<Payment> findByProviderReference(String providerReference);
 
     List<Payment> findAllByOrderId(UUID orderId);
+
+    List<Payment> findAllByOrderIdIn(List<UUID> orderIds);
 
     List<Payment> findAllByStatus(PaymentStatus status);
 

@@ -4,6 +4,7 @@ import com.example.order_service.dto.request.CreateOrderItemRequest;
 import com.example.order_service.dto.request.CreateOrderRequest;
 import com.example.order_service.dto.response.OrderResponse;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface OrderService {
@@ -13,6 +14,8 @@ public interface OrderService {
     );
 
     OrderResponse getOrderById(UUID id);
+
+    List<OrderResponse> getOrdersByUserId(UUID userId);
 
     OrderResponse addItem(
             UUID orderId,
