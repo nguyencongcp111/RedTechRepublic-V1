@@ -32,7 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(header.substring(7)).getPayload();
             UUID.fromString(Objects.toString(claims.get("userId", String.class), ""));
             if (claims.getSubject() == null || claims.getId() == null || claims.getExpiration() == null
-                    || !Set.of("USER", "ADMIN").contains(Objects.toString(claims.get("role", String.class), ""))) throw new IllegalArgumentException("Invalid claims");
+                    || !Set.of("USER", "SELLER", "ADMIN").contains(Objects.toString(claims.get("role", String.class), ""))) throw new IllegalArgumentException("Invalid claims");
         } catch (JwtException | IllegalArgumentException ex) { reject(response, 401, "Token không hợp lệ hoặc đã hết hạn"); return; }
         try {
             if (Boolean.TRUE.equals(redis.hasKey("blacklist:" + claims.getId()))) { reject(response, 401, "Phiên đăng nhập đã kết thúc"); return; }

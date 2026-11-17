@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { getProducts, createProduct, updateProduct, uploadProductImage, removeProductImage, getProductBySku } from '../api/productApi';
 import { allCategories, createCategory } from '../api/categoryApi';
+import { allShops } from '../api/shopApi';
+import type { Shop } from '../types/shop';
 import { errorText, money } from '../api/common';
 import type { Product, CreateProductRequest, UpdateProductRequest } from '../types/product';
 import type { Category } from '../types/category';
@@ -16,15 +18,17 @@ export default function ProductsPage() {
   const [saving,setSaving] = useState(false), [formError,setFormError] = useState('');
   const [categoryModal,setCategoryModal] = useState(false), [newCategory,setNewCategory] = useState('');
   const [categoryDescription,setCategoryDescription] = useState('');
+  const [shops,setShops] = useState<Shop[]>([]), [shopFilter,setShopFilter] = useState('');
+  useEffect(() => { let live = true; allShops().then(s => { if(live) setShops(s); }).catch(e => { if(live) setError(errorText(e)); }); return () => { live=false; }; },[revision]);
   useEffect(() => { let live = true; allCategories().then(c => { if(live) setCategories(c); }).catch(e => { if(live) setError(errorText(e)); }); return () => { live=false; }; },[revision]);
   useEffect(() => {
     let live=true;
     const timer=setTimeout(() => { setLoading(true); setError('');
-      getProducts(keyword,page,12,category).then(r => { if(live) { setProducts(r.data.items); setPages(r.data.totalPages); } })
+      getProducts(keyword,page,12,category,undefined,'createdAt','DESC',undefined,shopFilter).then(r => { if(live) { setProducts(r.data.items); setPages(r.data.totalPages); } })
         .catch(e => { if(live) setError(errorText(e)); }).finally(() => { if(live) setLoading(false); });
     },250);
     return () => { live=false; clearTimeout(timer); };
-  },[keyword,page,category,revision]);
+  },[keyword,page,category,shopFilter,revision]);
   const refresh=() => setRevision(r=>r+1);
   function open(product:Product|null) { setEditing(product); setFormError(''); setOpened(true); }
   async function save(values:CreateProductRequest|UpdateProductRequest,file?:File) {
@@ -56,17 +60,19 @@ export default function ProductsPage() {
       <button className="btn btn-ghost" disabled={!keyword.trim()} onClick={lookupSku}>Tra SKU chính xác</button>
       <select className="form-control" aria-label="Lọc danh mục" value={category} onChange={e=>{setCategory(e.target.value);setPage(0);}}>
         <option value="">Tất cả danh mục</option>{categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>
+      <select className="form-control" aria-label="Lọc gian hàng" value={shopFilter} onChange={e=>{setShopFilter(e.target.value);setPage(0);}}>
+        <option value="">Tất cả gian hàng</option>{shops.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select>
     </div>
-    {loading ? <div className="state-center">Đang tải sản phẩm…</div> : <div className="table-wrap"><table className="table"><thead><tr><th>Sản phẩm / tồn khả dụng</th><th>Danh mục</th><th>Giá</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>
+    {loading ? <div className="state-center">Đang tải sản phẩm…</div> : <div className="table-wrap"><table className="table"><thead><tr><th>Sản phẩm / tồn khả dụng</th><th>Gian hàng / người đăng</th><th>Danh mục</th><th>Giá</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>
       {products.map(p=><tr key={p.id}><td><div className="product-cell">{p.imageUrl ? <img src={p.imageUrl} alt={p.name}/> : <div className="image-placeholder small">T</div>}
         <div><strong>{p.name}</strong> <StockBadge sku={p.sku} refresh={revision}/><div className="muted">{p.sku}</div><small className="mono">{p.id}</small></div></div></td>
-        <td>{p.category?.name ?? 'Chưa phân loại'}</td><td>{money(p.price,p.currency)}</td><td><span className="badge badge-neutral">{p.status}</span></td>
+        <td>{p.shopName}<div className="muted">@{p.poster}</div></td><td>{p.category?.name ?? 'Chưa phân loại'}</td><td>{money(p.price,p.currency)}</td><td><span className="badge badge-neutral">{p.status}</span></td>
         <td><div className="inline-actions"><button className="btn btn-ghost btn-sm" onClick={()=>open(p)} disabled={p.status==='ARCHIVED'}>Chỉnh sửa</button>{p.imageUrl&&<button className="btn btn-ghost btn-sm" onClick={()=>removeImage(p)}>Gỡ ảnh</button>}</div></td></tr>)}
-      {!products.length&&<tr><td colSpan={5}>Chưa có sản phẩm phù hợp.</td></tr>}
+      {!products.length&&<tr><td colSpan={6}>Chưa có sản phẩm phù hợp.</td></tr>}
     </tbody></table></div>}
     <div className="pagination"><button className="btn btn-ghost" disabled={page===0} onClick={()=>setPage(p=>p-1)}>← Trước</button><span>{page+1} / {Math.max(1,pages)}</span><button className="btn btn-ghost" disabled={page+1>=pages} onClick={()=>setPage(p=>p+1)}>Sau →</button></div></div>
     {opened&&<Modal title={editing?'Chỉnh sửa sản phẩm':'Thêm sản phẩm'} onClose={()=>{if(!saving)setOpened(false);}}>
-      <ProductForm editingProduct={editing} onSubmit={save} onCancel={()=>setOpened(false)} submitting={saving} serverError={formError}/>
+      <ProductForm editingProduct={editing} shops={shops} onSubmit={save} onCancel={()=>setOpened(false)} submitting={saving} serverError={formError}/>
     </Modal>}
     {categoryModal&&<Modal title="Danh mục sản phẩm" onClose={()=>setCategoryModal(false)}>
       <form onSubmit={async e=>{e.preventDefault();setSaving(true);setFormError('');try{await createCategory({name:newCategory.trim(),description:categoryDescription.trim()});setNewCategory('');setCategoryDescription('');refresh();}catch(err){setFormError(errorText(err));}finally{setSaving(false);}}}>

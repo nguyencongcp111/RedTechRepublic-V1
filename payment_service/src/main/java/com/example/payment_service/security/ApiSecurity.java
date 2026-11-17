@@ -25,7 +25,8 @@ public class ApiSecurity {
                 .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info", "/actuator/prometheus", "/error").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/payments", "/api/payments/stats").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/payments/*/confirm", "/api/payments/*/refund").hasRole("ADMIN")
-                .anyRequest().hasAnyRole("ADMIN", "USER"))
+                .requestMatchers(HttpMethod.PATCH, "/api/payments/*").hasRole("ADMIN")
+                .anyRequest().hasAnyRole("ADMIN", "USER", "SELLER"))
             .oauth2ResourceServer(o -> o.jwt(j -> j.jwtAuthenticationConverter(converter))).build();
     }
 }

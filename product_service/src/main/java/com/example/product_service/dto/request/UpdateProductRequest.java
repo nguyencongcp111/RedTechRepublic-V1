@@ -21,5 +21,8 @@ public record UpdateProductRequest(
         @NotNull
         ProductStatus status,
 
-        @NotNull java.util.UUID categoryId
+        @NotNull java.util.UUID categoryId,
+
+        /** Không bắt buộc: null giữ nguyên gian hàng hiện tại. */
+        java.util.UUID shopId
 ) {}

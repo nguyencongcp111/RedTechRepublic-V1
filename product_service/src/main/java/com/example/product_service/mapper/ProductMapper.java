@@ -73,7 +73,10 @@ public class ProductMapper {
                 product.getCreatedAt(),
                 product.getUpdatedAt(),
                 product.getVersion(),
-                product.getImageUrl()
+                product.getImageUrl(),
+                product.getPoster(),
+                product.getShopId(),
+                product.getShopName()
         );
     }
 }

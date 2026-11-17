@@ -17,6 +17,7 @@ public record OrderResponse(
         String failureReason,
         List<OrderItemResponse> items,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        com.example.order_service.enums.PaymentMethod paymentMethod
 ) {
 }

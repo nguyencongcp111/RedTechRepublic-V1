@@ -82,6 +82,15 @@ public class PaymentController {
         );
     }
 
+    /** Sửa nhanh (ADMIN, xem ApiSecurity). */
+    @PatchMapping("/{paymentId}")
+    public ResponseEntity<PaymentResponse> quickEdit(
+            @PathVariable UUID paymentId,
+            @Valid @RequestBody com.example.payment_service.dto.request.QuickEditPaymentRequest request
+    ) {
+        return ResponseEntity.ok(paymentService.quickEdit(paymentId, request));
+    }
+
     @PostMapping("/{paymentId}/refund")
     public ResponseEntity<PaymentResponse> refund (
             @PathVariable UUID paymentId

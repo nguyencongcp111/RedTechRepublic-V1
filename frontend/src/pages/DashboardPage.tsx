@@ -2,20 +2,24 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axiosClient';
 import { money } from '../api/common';
+import { listSellerApplications } from '../api/sellerApi';
 type Stats={total:number;active?:number;categories?:number;available?:number;onHand?:number;reserved?:number;lowStock?:number;byStatus?:Record<string,number>;revenue?:{currency:string;amount:number}[]};
 const services=[['products','Sản phẩm','/products'],['inventory','Kho hàng','/inventory'],['orders','Đơn hàng','/orders'],['payments','Thanh toán','/payments']];
 export default function DashboardPage(){
+  const [pendingSellers,setPendingSellers]=useState<number|null>(null);
   const [stats,setStats]=useState<Record<string,Stats>>({}),[errors,setErrors]=useState<string[]>([]),[loading,setLoading]=useState(true),[updated,setUpdated]=useState('');
   const load=useCallback(async()=>{
     setLoading(true);
     const results=await Promise.allSettled(services.map(([s])=>api.get<Stats>(`/api/${s}/stats`)));
     const next:Record<string,Stats>={}, failed:string[]=[];
     results.forEach((r,i)=>{if(r.status==='fulfilled')next[services[i][0]]=r.value.data;else failed.push(services[i][1]);});
+    listSellerApplications('PENDING',0,1).then(r=>setPendingSellers(r.data.pending)).catch(()=>setPendingSellers(null));
     setStats(next);setErrors(failed);setUpdated(new Date().toLocaleTimeString('vi-VN'));setLoading(false);
   },[]);
   useEffect(()=>{const timer=setTimeout(()=>void load(),0);return()=>clearTimeout(timer);},[load]);
   const orderStates=stats.orders?.byStatus??{};
   return <div><div className="page-heading"><div><p className="eyebrow">TECHSHOP / TỔNG QUAN</p><h1 className="page-title">Một góc nhìn. Toàn bộ cửa hàng.</h1><p className="page-subtitle">Số liệu thực tế từ các dịch vụ · {updated?'Cập nhật lúc '+updated:'Đang kết nối'}</p></div><button className="btn btn-primary" disabled={loading} onClick={load}>{loading?'Đang tải…':'↻ Làm mới'}</button></div>
+    {!!pendingSellers&&<div className="alert alert-info" role="status">Có {pendingSellers} yêu cầu trở thành Seller đang chờ duyệt. <Link to="/users">Xem và duyệt →</Link></div>}
     {errors.length>0&&<div className="alert alert-error" role="alert">Chưa tải được: {errors.join(', ')}. Các số liệu này chưa khả dụng; hãy thử lại.</div>}
     <div className="metrics-grid">{services.map(([key,label,url],i)=><Link className="metric-card" to={url} key={key}><span className="metric-label">{label}<span>↗</span></span><strong>{stats[key]?.total?.toLocaleString('vi-VN')??'—'}</strong>
       <small>{i===0?`${stats.products?.active??'—'} đang bán · ${stats.products?.categories??'—'} danh mục`:i===1?`${stats.inventory?.available??'—'} sản phẩm khả dụng`:i===2?'Tất cả trạng thái':'Tất cả giao dịch'}</small></Link>)}</div>

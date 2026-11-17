@@ -28,13 +28,16 @@ import java.util.UUID;
 @RequestMapping("/api/products")
 public class ProductController {
     private final ProductService productService;
+    private final com.example.product_service.security.CurrentUser currentUser;
 
     @PostMapping
     public ResponseEntity<ProductResponse> addProduct(
-            @Valid @RequestBody CreateProductRequest request
+            @Valid @RequestBody CreateProductRequest request,
+            jakarta.servlet.http.HttpServletRequest http
     ) {
+        // Người đăng luôn lấy từ token, không nhận từ body.
         return new ResponseEntity<>(
-                productService.addProduct(request), HttpStatus.CREATED
+                productService.addProduct(request, currentUser.requirePublisher(http)), HttpStatus.CREATED
         );
     }
 
@@ -43,6 +46,8 @@ public class ProductController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) UUID categoryId,
             @RequestParam(required = false) com.example.product_service.enums.ProductStatus status,
+            @RequestParam(required = false) String poster,
+            @RequestParam(required = false) UUID shopId,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -55,7 +60,7 @@ public class ProductController {
         );
 
         PageResponse<ProductResponse> products =
-                productService.search(keyword, categoryId, status, pageable);
+                productService.search(keyword, categoryId, status, poster, shopId, pageable);
 
         return ResponseEntity.ok(products);
     }
@@ -81,10 +86,11 @@ public class ProductController {
     @PutMapping("/{id}")
     public ResponseEntity<ProductResponse> editProduct(
             @PathVariable UUID id,
-            @Valid @RequestBody UpdateProductRequest request
+            @Valid @RequestBody UpdateProductRequest request,
+            jakarta.servlet.http.HttpServletRequest http
     ) {
         return new ResponseEntity<>(
-                productService.editProduct(request, id), HttpStatus.OK
+                productService.editProduct(request, id, currentUser.requirePublisher(http)), HttpStatus.OK
         );
     }
 }

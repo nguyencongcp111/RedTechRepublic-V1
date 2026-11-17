@@ -33,7 +33,10 @@ public record CreateProductRequest(
         String currency,
 
         @NotNull
-        UUID categoryId
+        UUID categoryId,
+
+        @NotNull(message = "Vui lòng chọn gian hàng")
+        UUID shopId
 ) {
 
 }

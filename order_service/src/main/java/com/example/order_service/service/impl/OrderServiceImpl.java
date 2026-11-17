@@ -164,6 +164,25 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.toDTO(order);
     }
 
+    @Override
+    @Transactional
+    public OrderResponse quickEdit(UUID orderId, com.example.order_service.dto.request.QuickEditOrderRequest request) {
+        Order order = orderRepository.findWithItemsById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy order: " + orderId));
+        try {
+            if (request.paymentMethod() != null && request.paymentMethod() != order.getPaymentMethod()) {
+                order.changePaymentMethod(request.paymentMethod());
+            }
+            if (request.items() != null) {
+                for (var line : request.items()) order.changeItemQuantity(line.itemId(), line.quantity());
+            }
+        } catch (IllegalStateException | IllegalArgumentException ex) {
+            throw new InvalidOrderStateException(ex.getMessage());
+        }
+        orderRepository.saveAndFlush(order);
+        return orderMapper.toDTO(order);
+    }
+
     private void ensureOrderIsEditable(Order order) {
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new InvalidOrderStateException(

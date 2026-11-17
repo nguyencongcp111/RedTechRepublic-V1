@@ -26,11 +26,29 @@ import java.util.UUID;
 public class InventoryController {
     private final InventoryItemService inventoryItemService;
     private final InventoryReservationService inventoryReservationService;
+    private final com.example.inventory_service.security.CurrentUser currentUser;
+    private final com.example.inventory_service.client.ProductOwnerClient productOwners;
+
+    /** ADMIN quản lý mọi kho; SELLER chỉ tạo/điều chỉnh kho cho sản phẩm do mình đăng. */
+    private void requireStockOwner(jakarta.servlet.http.HttpServletRequest http,
+                                   java.util.function.Supplier<com.example.inventory_service.client.ProductOwnerClient.ProductOwner> product) {
+        var principal = currentUser.requirePublisher(http);
+        if (principal.isAdmin()) return;
+        if (!principal.username().equals(product.get().poster()))
+            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn chỉ được quản lý kho của sản phẩm do mình đăng");
+    }
 
     @PostMapping("/stock")
     public ResponseEntity<InventoryItemResponse> addItem (
-            @Valid @RequestBody CreateInventoryItemRequest request
+            @Valid @RequestBody CreateInventoryItemRequest request,
+            jakarta.servlet.http.HttpServletRequest http
     ) {
+        requireStockOwner(http, () -> {
+            var product = productOwners.byId(request.productId());
+            if (!product.sku().equalsIgnoreCase(request.sku().trim()))
+                throw new IllegalStateException("SKU không khớp với sản phẩm");
+            return product;
+        });
         return new ResponseEntity<>(
                 inventoryItemService.addInventoryItem(request), HttpStatus.CREATED
         );
@@ -68,8 +86,10 @@ public class InventoryController {
     @PatchMapping("/stock/{sku}")
     public ResponseEntity<InventoryItemResponse> adjustItem(
             @PathVariable String sku,
-            @Valid @RequestBody AdjustInventoryRequest request
+            @Valid @RequestBody AdjustInventoryRequest request,
+            jakarta.servlet.http.HttpServletRequest http
     ) {
+        requireStockOwner(http, () -> productOwners.bySku(sku));
         return ResponseEntity.ok(inventoryItemService.adjustInventory(sku, request));
     }
 

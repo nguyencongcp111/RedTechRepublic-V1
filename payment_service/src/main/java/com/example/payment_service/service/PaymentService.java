@@ -22,4 +22,6 @@ public interface PaymentService {
     PaymentResponse cancelPayment(UUID id, CancelPaymentRequest request);
 
     PaymentResponse refund(UUID id);
+
+    PaymentResponse quickEdit(UUID id, com.example.payment_service.dto.request.QuickEditPaymentRequest request);
 }

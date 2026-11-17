@@ -40,6 +40,7 @@ export default function ShopPage(){
   const add=useCallback((p:Product,quantity=1)=>{
     if(!isAuthenticated){navigate('/login',{state:{from:'/shop'}});return;}
     if(user?.role==='ADMIN'){setNotice('Tài khoản quản trị dùng để quản lý cửa hàng. Hãy dùng tài khoản khách hàng để đặt đơn.');return;}
+    if(user&&p.poster===user.username){setNotice('Đây là sản phẩm do bạn đăng.');return;}
     const available=stock[p.sku],inCart=items.find(i=>i.product.id===p.id)?.quantity??0;
     if(available==null){setNotice('Chưa xác nhận được tồn kho. Hãy làm mới và thử lại.');return;}
     if(quantity+inCart>available){setNotice(`Chỉ còn ${available} sản phẩm, giỏ hàng đã có ${inCart}.`);return;}
@@ -63,14 +64,14 @@ export default function ShopPage(){
       {loading?<div className="state-center">Đang tải sản phẩm…</div>:!products.length?<div className="empty-catalog"><h3>Chưa tìm thấy sản phẩm</h3><p>Hãy thử từ khóa khác hoặc chọn tất cả danh mục.</p><button className="btn btn-ghost" onClick={()=>{setCategory('');setKeyword('');setPage(0);}}>Xóa bộ lọc</button></div>:
         <div className="product-grid">{products.map(p=><article className="store-product" key={p.id}>
           <button className="product-image-button" onClick={()=>show(p)} aria-label={'Xem '+p.name}>{p.imageUrl?<img src={p.imageUrl} alt={p.name} loading="lazy"/>:<div className="image-placeholder"><span>T.</span><small>TECHSHOP</small></div>}<span className="product-category-label">{p.category?.name??'Sản phẩm'}</span></button>
-          <div className="store-product-body"><div className="product-title-row"><button className="text-button" onClick={()=>show(p)}><h3>{p.name}</h3></button><span className={`stock-pill ${stock[p.sku]===0?'sold-out':''}`}>{stockLabel(p.sku)}</span></div><p className="muted">{p.sku}</p>
+          <div className="store-product-body"><div className="product-title-row"><button className="text-button" onClick={()=>show(p)}><h3>{p.name}</h3></button><span className={`stock-pill ${stock[p.sku]===0?'sold-out':''}`}>{stockLabel(p.sku)}</span></div><p className="muted">{p.shopName} · đăng bởi <strong>{p.poster}</strong></p>
             <div className="product-buy-row"><strong>{money(p.price,p.currency)}</strong><button className="add-cart-button" aria-label={'Thêm '+p.name+' vào giỏ'} disabled={stock[p.sku]==null||stock[p.sku]===0} onClick={()=>add(p)}>+</button></div></div>
         </article>)}</div>}
       <div className="pagination"><button className="btn btn-ghost" disabled={page===0} onClick={()=>setPage(p=>p-1)}>← Trước</button><span>{page+1} / {Math.max(1,pages)}</span><button className="btn btn-ghost" disabled={page+1>=pages} onClick={()=>setPage(p=>p+1)}>Sau →</button></div>
     </section>
     <section className="shop-bottom-banner"><div><p className="eyebrow">MỖI ĐƠN HÀNG, MỘT TRẢI NGHIỆM</p><h2>Giỏ hàng hôm nay.<br/>Cảm hứng cho ngày mai.</h2></div><Link className="btn btn-primary" to={isAuthenticated?'/shop/orders':'/login'}>{isAuthenticated?'Theo dõi đơn hàng':'Bắt đầu cùng TechShop'} →</Link></section>
     {detail&&<Modal title={detail.name} onClose={()=>setDetail(null)}><div className="detail-grid">{detail.imageUrl?<img className="detail-image" src={detail.imageUrl} alt={detail.name}/>:<div className="image-placeholder">T.</div>}
-      <div><p className="eyebrow">{detail.category?.name}</p><h3>{money(detail.price,detail.currency)}</h3><p className="product-description">{detail.description||'Chưa có mô tả.'}</p><p className="muted">{detail.sku} · {stockLabel(detail.sku)}</p>
+      <div><p className="eyebrow">{detail.category?.name}</p><h3>{money(detail.price,detail.currency)}</h3><p className="product-description">{detail.description||'Chưa có mô tả.'}</p><p className="muted">{detail.sku} · {stockLabel(detail.sku)}</p><p className="muted">Gian hàng <strong>{detail.shopName}</strong> · đăng bởi <strong>{detail.poster}</strong></p>
         <label className="form-group">Số lượng<input className="form-control" type="number" min={1} max={stock[detail.sku]??1} value={qty} onChange={e=>setQty(Math.max(1,Math.floor(Number(e.target.value)||1)))}/></label>
         <button className="btn btn-primary" disabled={!stock[detail.sku]} onClick={()=>add(detail,qty)}>Thêm vào giỏ →</button></div></div></Modal>}
   </div>;

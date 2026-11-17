@@ -43,6 +43,8 @@ services:
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+      JWT_SECRET: ${JWT_SECRET}
+      INVENTORY_SERVICE_URL: http://inventory-service:8082
       DDL_AUTO: validate
     depends_on:
       postgres:
@@ -55,6 +57,8 @@ services:
       INVENTORY_DB_URL: jdbc:postgresql://postgres:5432/x_inventory_db
       INVENTORY_DB_USERNAME: ${POSTGRES_USER:-postgres}
       INVENTORY_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET}
+      PRODUCT_SERVICE_URL: http://product-service:8081
       DDL_AUTO: validate
     depends_on:
       postgres:

@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { loginApi, logoutApi } from '../api/authApi';
-import type { LoginRequest } from '../types/auth';
+import { loginApi, logoutApi, refreshTokenApi } from '../api/authApi';
+import type { LoginRequest, Role } from '../types/auth';
 
 export interface AuthUser {
   userId: string;
   username: string;
-  role: 'ADMIN' | 'USER';
+  role: Role;
 }
 
 interface AuthContextValue {
@@ -13,6 +13,8 @@ interface AuthContextValue {
   accessToken: string | null;
   login: (data: LoginRequest) => Promise<AuthUser>;
   logout: () => Promise<void>;
+  /** Lấy access token mới (vd. sau khi được duyệt SELLER để cập nhật role). */
+  refreshSession: () => Promise<AuthUser | null>;
   isAuthenticated: boolean;
 }
 
@@ -35,7 +37,7 @@ function buildUser(
   return {
     userId: String(payload['userId'] ?? ''),
     username: String(payload['sub'] ?? fallbackUsername ?? ''),
-    role: (String(payload['role'] ?? 'USER').toUpperCase() as 'ADMIN' | 'USER'),
+    role: (String(payload['role'] ?? 'USER').toUpperCase() as Role),
   };
 }
 
@@ -79,6 +81,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return authUser;
   }, []);
 
+  const refreshSession = useCallback(async (): Promise<AuthUser | null> => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) return null;
+    const res = await refreshTokenApi(refreshToken);
+    const next = res.data.data;
+    localStorage.setItem('accessToken', next.accessToken);
+    localStorage.setItem('refreshToken', next.refreshToken);
+    const payload = decodeJwt(next.accessToken);
+    const authUser = payload ? buildUser(payload) : null;
+    setAccessToken(next.accessToken);
+    setUser(authUser);
+    window.dispatchEvent(new Event('auth-changed'));
+    return authUser;
+  }, []);
+
   const logout = useCallback(async () => {
     const token = localStorage.getItem('accessToken');
     if (token) {
@@ -92,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, accessToken, login, logout, isAuthenticated: !!accessToken }}
+      value={{ user, accessToken, login, logout, refreshSession, isAuthenticated: !!accessToken }}
     >
       {children}
     </AuthContext.Provider>

@@ -138,6 +138,16 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentMapper.toDTO(payment);
     }
 
+    @Override
+    @Transactional
+    public PaymentResponse quickEdit(UUID id, com.example.payment_service.dto.request.QuickEditPaymentRequest request) {
+        Payment payment = paymentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thanh toán"));
+        payment.quickEdit(request.paymentMethod(), request.providerReference());
+        paymentRepository.saveAndFlush(payment);
+        return paymentMapper.toDTO(payment);
+    }
+
     private void validateSameRequest(Payment payment, CreatePaymentRequest request) {
         boolean same = payment.getOrderId().equals(request.orderId())
                 && payment.getAmount() == request.amount()

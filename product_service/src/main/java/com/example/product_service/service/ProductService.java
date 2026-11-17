@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ProductService {
-    ProductResponse addProduct(CreateProductRequest request);
+    ProductResponse addProduct(CreateProductRequest request, com.example.product_service.security.CurrentUser.Principal poster);
 
     PageResponse<ProductResponse> getAllProduct(int page, int size, String sortBy, Sort.Direction sortDirection);
 
@@ -20,9 +20,11 @@ public interface ProductService {
 
     PageResponse<ProductResponse> search(String keyword, UUID categoryId, com.example.product_service.enums.ProductStatus status, Pageable pageable);
 
+    PageResponse<ProductResponse> search(String keyword, UUID categoryId, com.example.product_service.enums.ProductStatus status, String poster, UUID shopId, Pageable pageable);
+
     ProductResponse getProductById (UUID id);
 
     ProductResponse getProductBySku (String sku);
 
-    ProductResponse editProduct(UpdateProductRequest request, UUID id);
+    ProductResponse editProduct(UpdateProductRequest request, UUID id, com.example.product_service.security.CurrentUser.Principal actor);
 }

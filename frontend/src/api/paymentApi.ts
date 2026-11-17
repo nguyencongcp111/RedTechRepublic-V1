@@ -4,6 +4,7 @@ import type {
   CreatePaymentRequest,
   ConfirmPaymentRequest,
   CancelPaymentRequest,
+  PaymentMethod,
 } from '../types/payment';
 
 export const createPayment = (
@@ -28,6 +29,10 @@ export const confirmPayment = (id: string, data: ConfirmPaymentRequest) =>
 
 export const cancelPayment = (id: string, data: CancelPaymentRequest) =>
   axiosClient.post<Payment>(`/api/payments/${id}/cancel`, data);
+
+/** Sửa nhanh (ADMIN, chỉ khi PENDING): phương thức và mã đối soát. */
+export const quickEditPayment = (id: string, data: { paymentMethod?: PaymentMethod; providerReference?: string }) =>
+  axiosClient.patch<Payment>(`/api/payments/${id}`, data);
 
 export const refundPayment = (id: string) =>
   axiosClient.post<Payment>(`/api/payments/${id}/refund`);

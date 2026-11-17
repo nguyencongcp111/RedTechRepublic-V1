@@ -18,6 +18,8 @@ export interface Order {
   totalAmount: number;
   currency: string;
   items: OrderItem[];
+  paymentMethod?: PaymentMethod;
+  failureReason?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }

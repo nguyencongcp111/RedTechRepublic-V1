@@ -90,10 +90,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        System.out.println(
-                "JWT FILTER: no token, continue"
-        );
-
         filterChain.doFilter(
                 request,
                 response

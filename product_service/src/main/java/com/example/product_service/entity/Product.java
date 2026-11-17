@@ -81,4 +81,20 @@ public class Product {
 
     @Column(length = 255)
     private String imagePublicId;
+
+    /** Username của tài khoản đăng sản phẩm, lấy từ access token. */
+    @NotBlank
+    @Size(max = 64)
+    @Column(nullable = false, length = 64)
+    private String poster;
+
+    /** Gian hàng (Shop) trong inventory_service; không có FK xuyên service. */
+    @NotNull
+    @Column(nullable = false)
+    private UUID shopId;
+
+    @NotBlank
+    @Size(max = 255)
+    @Column(nullable = false)
+    private String shopName;
 }

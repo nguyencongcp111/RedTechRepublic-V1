@@ -5,9 +5,11 @@ import './Sidebar.css';
 const NAV_ITEMS = [
   { to: '/dashboard', icon: '📊', label: 'Dashboard' },
   { to: '/products', icon: '📦', label: 'Sản phẩm' },
+  { to: '/shops', icon: '🏪', label: 'Gian hàng' },
   { to: '/inventory', icon: '🏭', label: 'Tồn kho' },
   { to: '/orders', icon: '📋', label: 'Đơn hàng' },
   { to: '/payments', icon: '💳', label: 'Thanh toán' },
+  { to: '/users', icon: '👥', label: 'Người dùng' },
 ];
 
 export default function Sidebar() {

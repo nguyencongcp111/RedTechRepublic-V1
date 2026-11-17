@@ -13,12 +13,25 @@ import ShopPage from './pages/shop/ShopPage';
 import CartPage from './pages/shop/CartPage';
 import OrderHistoryPage from './pages/shop/OrderHistoryPage';
 import PaymentHistoryPage from './pages/shop/PaymentHistoryPage';
+import BecomeSellerPage from './pages/shop/BecomeSellerPage';
+import SellerHubPage from './pages/seller/SellerHubPage';
+import UsersPage from './pages/UsersPage';
+import ShopsPage from './pages/ShopsPage';
 
 /** Admin-only route guard */
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (user?.role !== 'ADMIN') return <Navigate to="/shop" replace />;
+  return <>{children}</>;
+}
+
+/** Seller-only route guard (Kênh người bán) */
+function SellerRoute({ children }: { children: React.ReactNode }) {
+  const { user, isAuthenticated } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" state={{ from: '/seller' }} replace />;
+  if (user?.role === 'ADMIN') return <Navigate to="/shops" replace />;
+  if (user?.role !== 'SELLER') return <Navigate to="/shop/seller" replace />;
   return <>{children}</>;
 }
 
@@ -75,6 +88,20 @@ function App() {
               </CartRoute>
             } />
 
+            {/* /shop/seller – USER ứng tuyển trở thành Seller */}
+            <Route path="/shop/seller" element={
+              <CartRoute>
+                <ShopLayout><BecomeSellerPage /></ShopLayout>
+              </CartRoute>
+            } />
+
+            {/* /seller – Kênh người bán (SELLER) */}
+            <Route path="/seller" element={
+              <SellerRoute>
+                <ShopLayout><SellerHubPage /></ShopLayout>
+              </SellerRoute>
+            } />
+
             {/* ── ADMIN routes ── */}
             <Route path="/dashboard" element={
               <AdminRoute><MainLayout><DashboardPage /></MainLayout></AdminRoute>
@@ -90,6 +117,13 @@ function App() {
             } />
             <Route path="/payments" element={
               <AdminRoute><MainLayout><PaymentsPage /></MainLayout></AdminRoute>
+            } />
+
+            <Route path="/shops" element={
+              <AdminRoute><MainLayout><ShopsPage /></MainLayout></AdminRoute>
+            } />
+            <Route path="/users" element={
+              <AdminRoute><MainLayout><UsersPage /></MainLayout></AdminRoute>
             } />
 
             {/* Catch-all */}

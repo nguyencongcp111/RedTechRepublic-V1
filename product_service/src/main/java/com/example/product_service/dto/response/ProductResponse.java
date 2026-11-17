@@ -17,5 +17,8 @@ public record ProductResponse(
         Instant createdAt,
         Instant updatedAt,
         long version,
-        String imageUrl
+        String imageUrl,
+        String poster,
+        UUID shopId,
+        String shopName
 ) {}

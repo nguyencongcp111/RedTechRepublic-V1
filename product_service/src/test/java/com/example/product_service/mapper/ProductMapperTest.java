@@ -12,7 +12,7 @@ class ProductMapperTest {
     @Test
     void normalizesSkuAndCurrency() {
         Product product = mapper.addToEntity(
-                new CreateProductRequest(" sku-1 ", " Product ", null, 100L, "vnd", java.util.UUID.randomUUID())
+                new CreateProductRequest(" sku-1 ", " Product ", null, 100L, "vnd", java.util.UUID.randomUUID(), java.util.UUID.randomUUID())
         );
         assertEquals("SKU-1", product.getSku());
         assertEquals("VND", product.getCurrency());

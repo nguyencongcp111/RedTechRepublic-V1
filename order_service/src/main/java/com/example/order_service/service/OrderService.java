@@ -22,6 +22,8 @@ public interface OrderService {
             CreateOrderItemRequest request
     );
 
+    OrderResponse quickEdit(UUID orderId, com.example.order_service.dto.request.QuickEditOrderRequest request);
+
     OrderResponse removeItem(
             UUID orderId,
             UUID orderItemId

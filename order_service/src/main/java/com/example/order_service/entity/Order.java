@@ -141,6 +141,31 @@ public class Order {
         item.setOrder(null);
     }
 
+    /** Đổi phương thức thanh toán khi đơn chưa kết thúc. */
+    public void changePaymentMethod(PaymentMethod method) {
+        if (status == OrderStatus.CONFIRMED || status == OrderStatus.CANCELLED || status == OrderStatus.FAILED) {
+            throw new IllegalStateException("Không thể đổi phương thức thanh toán khi đơn ở trạng thái " + status);
+        }
+        paymentMethod = Objects.requireNonNull(method);
+    }
+
+    /** Đổi số lượng một dòng hàng; chỉ khi đơn chưa giữ tồn kho (PENDING). */
+    public void changeItemQuantity(UUID itemId, int quantity) {
+        if (status != OrderStatus.PENDING) {
+            throw new IllegalStateException("Chỉ được sửa số lượng khi đơn đang PENDING");
+        }
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Số lượng phải lớn hơn 0");
+        }
+        OrderItem item = items.stream().filter(i -> i.getId().equals(itemId)).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Item không thuộc order này"));
+        long newLineTotal = Math.multiplyExact(item.getUnitPrice(), (long) quantity);
+        totalQuantity = Math.addExact(Math.subtractExact(totalQuantity, item.getQuantity()), quantity);
+        totalAmount = Math.addExact(Math.subtractExact(totalAmount, item.getLineTotal()), newLineTotal);
+        item.setQuantity(quantity);
+        item.setLineTotal(newLineTotal);
+    }
+
     public void markInventoryReserved() {
         transition(OrderStatus.PENDING, OrderStatus.INVENTORY_RESERVED);
     }

@@ -15,6 +15,10 @@ export interface Product {
   updatedAt: string;
   version: number;
   imageUrl?: string | null;
+  /** Username tài khoản đăng sản phẩm (backend lấy từ token). */
+  poster: string;
+  shopId: string;
+  shopName: string;
 }
 
 export interface ProductResponse<T> {
@@ -34,6 +38,7 @@ export interface ProductFormValues {
   currency: string;
   status: ProductStatus;
   categoryId: string;
+  shopId: string;
 }
 
 export const emptyProductForm: ProductFormValues = {
@@ -44,6 +49,7 @@ export const emptyProductForm: ProductFormValues = {
   currency: 'VND',
   status: 'ACTIVE',
   categoryId: '',
+  shopId: '',
 };
 
 export interface CreateProductRequest {
@@ -53,10 +59,12 @@ export interface CreateProductRequest {
   price: number;
   currency: string;
   categoryId: string;
+  shopId: string;
 }
 
 export interface UpdateProductRequest {
   categoryId: string;
+  shopId?: string;
   name: string;
   description: string;
   price: number;

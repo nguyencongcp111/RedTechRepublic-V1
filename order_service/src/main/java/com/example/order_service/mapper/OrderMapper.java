@@ -61,7 +61,8 @@ public class OrderMapper {
                 order.getFailureReason(),
                 items,
                 order.getCreatedAt(),
-                order.getUpdatedAt()
+                order.getUpdatedAt(),
+                order.getPaymentMethod()
         );
     }
 

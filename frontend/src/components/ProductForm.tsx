@@ -4,16 +4,25 @@ import { errorText } from '../api/common';
 import { emptyProductForm } from '../types/product';
 import type { Product, CreateProductRequest, UpdateProductRequest, ProductStatus } from '../types/product';
 import type { Category } from '../types/category';
+import type { Shop } from '../types/shop';
 
-export default function ProductForm({ editingProduct, onSubmit, onCancel, submitting, serverError }: {
+/**
+ * Form sản phẩm dùng chung cho ADMIN và SELLER. Không có ô "người đăng":
+ * backend lấy username từ token đang đăng nhập.
+ */
+export default function ProductForm({ editingProduct, onSubmit, onCancel, submitting, serverError, shops, canCreateCategory = true }: {
   editingProduct: Product | null;
+  /** Gian hàng được phép chọn (SELLER: của mình; ADMIN: tất cả). */
+  shops: Shop[];
+  canCreateCategory?: boolean;
   onSubmit: (values: CreateProductRequest | UpdateProductRequest, file?: File) => Promise<void>;
   onCancel: () => void; submitting: boolean; serverError: string | null;
 }) {
   const [values, setValues] = useState(() => editingProduct ? {
     sku: editingProduct.sku, name: editingProduct.name, description: editingProduct.description ?? '',
-    price: editingProduct.price, currency: editingProduct.currency, status: editingProduct.status, categoryId: editingProduct.category?.id ?? ''
-  } : emptyProductForm);
+    price: editingProduct.price, currency: editingProduct.currency, status: editingProduct.status, categoryId: editingProduct.category?.id ?? '',
+    shopId: editingProduct.shopId
+  } : { ...emptyProductForm, shopId: shops.length === 1 ? shops[0].id : '' });
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryName, setCategoryName] = useState('');
   const [loadingCategories, setLoadingCategories] = useState(true);
@@ -39,8 +48,9 @@ export default function ProductForm({ editingProduct, onSubmit, onCancel, submit
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setError('');
     if (!values.categoryId) { setError('Vui lòng chọn danh mục.'); return; }
+    if (!values.shopId) { setError('Vui lòng chọn gian hàng.'); return; }
     if (!Number.isSafeInteger(values.price) || values.price < 0) { setError('Giá phải là số nguyên không âm.'); return; }
-    const common = { name: values.name.trim(), description: values.description.trim(), price: values.price, categoryId: values.categoryId };
+    const common = { name: values.name.trim(), description: values.description.trim(), price: values.price, categoryId: values.categoryId, shopId: values.shopId };
     await onSubmit(editingProduct ? { ...common, status: values.status } : {
       ...common, sku: values.sku.trim(), currency: values.currency.toUpperCase()
     }, file);
@@ -62,8 +72,14 @@ export default function ProductForm({ editingProduct, onSubmit, onCancel, submit
       <option value="">{loadingCategories ? 'Đang tải danh mục…' : 'Chọn danh mục'}</option>
       {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
     </select></label>
-    <div className="inline-actions"><input className="form-control" placeholder="Tên danh mục mới" aria-label="Tên danh mục mới" value={categoryName} maxLength={255}
-      onChange={e => setCategoryName(e.target.value)} /><button type="button" className="btn btn-ghost" disabled={addingCategory || !categoryName.trim()} onClick={addCategory}>+ Tạo danh mục</button></div>
+    <label className="form-group">Gian hàng<select className="form-control" required value={values.shopId}
+      onChange={e => setValues({ ...values, shopId: e.target.value })}>
+      <option value="">{shops.length ? 'Chọn gian hàng' : 'Chưa có gian hàng – hãy tạo gian hàng trước'}</option>
+      {shops.map(s => <option key={s.id} value={s.id}>{s.name}{s.system ? ' (hệ thống)' : ''} · {s.ownerUsername}</option>)}
+      {editingProduct && !shops.some(s => s.id === editingProduct.shopId) && <option value={editingProduct.shopId}>{editingProduct.shopName}</option>}
+    </select></label>
+    {canCreateCategory && <div className="inline-actions"><input className="form-control" placeholder="Tên danh mục mới" aria-label="Tên danh mục mới" value={categoryName} maxLength={255}
+      onChange={e => setCategoryName(e.target.value)} /><button type="button" className="btn btn-ghost" disabled={addingCategory || !categoryName.trim()} onClick={addCategory}>+ Tạo danh mục</button></div>}
     <label className="form-group">Mô tả<textarea className="form-control" rows={3} value={values.description} maxLength={editingProduct ? 2000 : 1500}
       onChange={e => setValues({ ...values, description: e.target.value })} /></label>
     {editingProduct && <label className="form-group">Trạng thái<select className="form-control" value={values.status}

@@ -121,6 +121,14 @@ public class Payment {
         failureMessage = message;
     }
 
+    public void quickEdit(PaymentMethod method, String reference) {
+        if (status != PaymentStatus.PENDING) {
+            throw new IllegalStateException("Chỉ sửa nhanh được thanh toán đang PENDING");
+        }
+        if (method != null) paymentMethod = method;
+        if (reference != null) providerReference = reference.isBlank() ? null : reference.trim();
+    }
+
     public void refund() {
         if (status == PaymentStatus.REFUNDED) {
             return;

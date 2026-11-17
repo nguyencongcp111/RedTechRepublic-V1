@@ -39,6 +39,11 @@ spring:
               predicates:
                 - Path=/api/inventory/**
 
+            - id: shop-service
+              uri: http://inventory-service:8082
+              predicates:
+                - Path=/api/shops,/api/shops/**
+
             - id: order-service
               uri: http://order-service:8083
               predicates:

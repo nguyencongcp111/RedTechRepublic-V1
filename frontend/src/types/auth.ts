@@ -1,3 +1,5 @@
+export type Role = 'ADMIN' | 'SELLER' | 'USER';
+
 export interface LoginRequest {
     username: string;
     password: string;
@@ -6,5 +8,5 @@ export interface LoginRequest {
 export interface LoginResponse {
     token: string;
     username: string;
-    role: 'ADMIN' | 'USER';
+    role: Role;
 }

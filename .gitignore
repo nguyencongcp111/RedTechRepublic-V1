@@ -1,0 +1,25 @@
+# Bí mật cục bộ (dùng .env.example làm mẫu)
+.env
+
+# Gradle: cache, build output
+.gradle-cache/
+**/.gradle/
+**/build/
+!**/src/**/build/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+out/
+
+# Profile LibreOffice sinh ra khi xuất tài liệu
+docs/.lo_profile_*/
+
+# Frontend (đã có frontend/.gitignore, giữ thêm cho chắc)
+**/node_modules/
+frontend/dist/
+
+# Hệ điều hành
+.DS_Store
+Thumbs.db

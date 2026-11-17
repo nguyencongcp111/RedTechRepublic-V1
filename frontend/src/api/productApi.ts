@@ -1,7 +1,7 @@
 import api from './axiosClient';
 import type { Product, ProductResponse, CreateProductRequest, UpdateProductRequest, ProductStatus } from '../types/product';
-export const getProducts = (keyword = '', page = 0, size = 10, categoryId?: string, status?: ProductStatus, sortBy = 'createdAt', sortDirection = 'DESC') =>
-  api.get<ProductResponse<Product>>('/api/products', { params: { keyword, page, size, categoryId: categoryId || undefined, status, sortBy, sortDirection } });
+export const getProducts = (keyword = '', page = 0, size = 10, categoryId?: string, status?: ProductStatus, sortBy = 'createdAt', sortDirection = 'DESC', poster?: string, shopId?: string) =>
+  api.get<ProductResponse<Product>>('/api/products', { params: { keyword, page, size, categoryId: categoryId || undefined, status, sortBy, sortDirection, poster: poster || undefined, shopId: shopId || undefined } });
 export const getProduct = (id: string) => api.get<Product>(`/api/products/${id}`);
 export const getProductBySku = (sku: string) => api.get<Product>(`/api/products/by-sku/${encodeURIComponent(sku)}`);
 export const createProduct = (data: CreateProductRequest) => api.post<Product>('/api/products', data);

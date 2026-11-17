@@ -46,6 +46,15 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrdersByUserId(userId));
     }
 
+    /** Sửa nhanh (ADMIN, xem ApiSecurity). */
+    @PatchMapping("/{orderId}")
+    public ResponseEntity<OrderResponse> quickEdit(
+            @PathVariable UUID orderId,
+            @Valid @RequestBody com.example.order_service.dto.request.QuickEditOrderRequest request
+    ) {
+        return ResponseEntity.ok(orderService.quickEdit(orderId, request));
+    }
+
     @PostMapping("/{orderId}/items")
     public ResponseEntity<OrderResponse> addItem(
             @PathVariable UUID orderId,

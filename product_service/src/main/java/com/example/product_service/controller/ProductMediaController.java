@@ -11,14 +11,19 @@ import java.util.*;
 public class ProductMediaController {
     private final ProductServiceImpl products;
     private final CloudinaryImageService images;
+    private final com.example.product_service.security.CurrentUser currentUser;
     @GetMapping("/stats")
     public Map<String, Object> stats() { return products.stats(); }
     @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ProductResponse upload(@PathVariable UUID id, @RequestPart("file") MultipartFile file) {
-        products.getProductById(id);
+    public ProductResponse upload(@PathVariable UUID id, @RequestPart("file") MultipartFile file,
+                                  jakarta.servlet.http.HttpServletRequest http) {
+        products.requireCanModify(id, currentUser.requirePublisher(http));
         var image = images.upload(id, file);
         return products.setImage(id, image.url(), image.publicId());
     }
     @DeleteMapping("/{id}/image")
-    public ProductResponse remove(@PathVariable UUID id) { return products.setImage(id, null, null); }
+    public ProductResponse remove(@PathVariable UUID id, jakarta.servlet.http.HttpServletRequest http) {
+        products.requireCanModify(id, currentUser.requirePublisher(http));
+        return products.setImage(id, null, null);
+    }
 }

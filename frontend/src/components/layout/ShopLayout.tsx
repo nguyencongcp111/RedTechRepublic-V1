@@ -31,6 +31,9 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
               <>
                 <Link to="/shop/orders" className="shop-nav-link">📦 Đơn hàng</Link>
                 <Link to="/shop/payments" className="shop-nav-link">🧾 Thanh toán</Link>
+                {user.role === 'SELLER'
+                  ? <Link to="/seller" className="shop-nav-link">🏪 Kênh người bán</Link>
+                  : <Link to="/shop/seller" className="shop-nav-link">✨ Trở thành Seller</Link>}
               </>
             )}
           </nav>
